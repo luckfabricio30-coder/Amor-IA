@@ -1,10 +1,6 @@
 import { GoogleGenAI, Content, Part } from "@google/genai";
 import { Character, Message, MessageRole } from '../types';
 
-// Ensure API key is available
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
-
 // Helper to convert internal message format to Gemini content format
 const convertHistoryToContents = (messages: Message[]): Content[] => {
   return messages.map((m) => ({
@@ -19,6 +15,9 @@ export const generateTextResponse = async (
   userMessageText: string
 ): Promise<string> => {
   try {
+    // Initialize AI client with the current API key from environment
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
     // We use gemini-3-pro-preview for the best "human-like" reasoning and massive context window (memory).
     // The context window is large enough to hold the entire conversation history effectively.
     const model = 'gemini-3-pro-preview';
@@ -52,6 +51,7 @@ export const generateTextResponse = async (
 
 export const generateSelfie = async (character: Character, context: string): Promise<string | null> => {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-pro-image-preview'; // Upgrading to Pro image model for better quality
     
     const prompt = `A realistic smartphone selfie of a man named ${character.name}, ${character.age} years old, ${character.job}. 
@@ -64,7 +64,7 @@ export const generateSelfie = async (character: Character, context: string): Pro
       model: model,
       contents: prompt,
       config: {
-        responseMimeType: 'image/jpeg',
+        // responseMimeType not supported for nano banana series models
       }
     });
 

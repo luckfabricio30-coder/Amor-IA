@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CHARACTERS } from './constants';
 import { Character } from './types';
 import { CharacterCard } from './components/CharacterCard';
@@ -7,6 +7,71 @@ import { Sparkles, Flame } from 'lucide-react';
 
 const App: React.FC = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
+  const [isLoadingKey, setIsLoadingKey] = useState<boolean>(true);
+
+  useEffect(() => {
+    const checkApiKey = async () => {
+      const win = window as any;
+      if (win.aistudio) {
+        try {
+          const hasKey = await win.aistudio.hasSelectedApiKey();
+          setHasApiKey(hasKey);
+        } catch (e) {
+          console.error(e);
+          setHasApiKey(false);
+        }
+      } else {
+        // In local/production env without aistudio injection, assume env var is handled
+        setHasApiKey(true);
+      }
+      setIsLoadingKey(false);
+    };
+    checkApiKey();
+  }, []);
+
+  const handleSelectKey = async () => {
+    const win = window as any;
+    if (win.aistudio) {
+      try {
+        await win.aistudio.openSelectKey();
+        setHasApiKey(true);
+      } catch (e) {
+        console.error("Key selection failed", e);
+        setHasApiKey(false);
+      }
+    }
+  };
+
+  if (isLoadingKey) {
+    return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Carregando...</div>;
+  }
+
+  const win = window as any;
+  if (win.aistudio && !hasApiKey) {
+    return (
+      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center text-white p-6 text-center">
+        <h2 className="text-2xl font-bold mb-4">Acesso à API Necessário</h2>
+        <p className="text-gray-400 mb-6 max-w-md">
+          Para usar o Amor.AI com os modelos mais recentes (Gemini 3 Pro & Imagem), você precisa selecionar uma chave de API paga.
+        </p>
+        <button 
+          onClick={handleSelectKey}
+          className="px-6 py-3 bg-brand-600 rounded-full font-bold hover:bg-brand-500 transition-colors mb-4"
+        >
+          Selecionar Chave de API
+        </button>
+        <a 
+          href="https://ai.google.dev/gemini-api/docs/billing" 
+          target="_blank" 
+          rel="noreferrer"
+          className="text-xs text-brand-400 hover:underline"
+        >
+          Informações sobre faturamento e preços
+        </a>
+      </div>
+    );
+  }
 
   if (selectedCharacter) {
     return (

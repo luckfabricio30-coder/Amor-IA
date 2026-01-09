@@ -12,10 +12,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character
 
   // Função para processar o texto e separar falas de ações/pensamentos
   const renderStyledText = (text: string) => {
-    // Regex atualizada para capturar:
-    // 1. Texto entre parênteses: \(.*?\)
-    // 2. Texto entre asteriscos: \*[^*]+\*
-    const parts = text.split(/(\(.*?\)|(?:\*[^*]+\*))/g);
+    // Regex para capturar:
+    // 1. Texto entre parênteses: ( ... ) - suporta quebra de linha com [\s\S]
+    // 2. Texto entre asteriscos: * ... *
+    const parts = text.split(/(\([\s\S]*?\)|(?:\*[^*]+\*))/g);
 
     return parts.map((part, index) => {
       if (!part) return null;
@@ -24,15 +24,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character
       const isAsterisk = part.startsWith('*') && part.endsWith('*');
       const isThought = isParenthesis || isAsterisk;
       
-      // Remove asteriscos para estética limpa, mas mantém parênteses pois fazem parte da frase
       let displayText = part;
+      // Remove asteriscos para estética limpa, mas mantém parênteses
       if (isAsterisk) displayText = part.replace(/\*/g, '');
 
       if (isThought) {
         return (
           <span 
             key={index} 
-            className="inline-block text-cyan-300/90 italic text-[14px] font-light my-0.5 leading-relaxed tracking-wide drop-shadow-[0_0_2px_rgba(34,211,238,0.3)]"
+            // Estilo "Pensamento": Mais claro (cyan-200), itálico, fonte leve
+            className="inline-block text-cyan-200/90 italic text-[14px] font-light my-0.5 leading-relaxed tracking-wide drop-shadow-[0_0_2px_rgba(34,211,238,0.3)]"
           >
             {displayText}
           </span>
@@ -44,6 +45,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character
         return (
           <span 
             key={index} 
+            // Estilo "Fala": Branco puro, negrito, destaque
             className="inline text-white text-[16px] font-semibold leading-snug drop-shadow-sm"
           >
             {part}
@@ -51,8 +53,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character
         );
       }
       
-      // Mantém espaços e pontuação entre os blocos se necessário, 
-      // mas o split geralmente captura tudo. Se for apenas quebra de linha ou espaço:
+      // Preserva espaços/quebras de linha entre os blocos
       if (part.match(/^\s+$/)) {
           return <span key={index}>{part}</span>;
       }
